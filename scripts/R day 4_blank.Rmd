@@ -1,0 +1,119 @@
+---
+title: "R Workshop Day 4: Simulation and Problem Solving"
+author: "Mike Burnham"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_notebook:
+    number_sections: true
+---
+
+# Control structures
+Control structures are what allow you to control the execution of your code. Most of them are conceptually fairly intuitive, but they can get a bit complicated in practice. 
+
+![](images/control.png)
+
+There is a lot to say about control structures in R. Some of what we will do here is generally considered bad practice. However, we will ignore that for now because our focus is on developing an intuition about how control structures work and some of the bad practices are more explicit in how they are expressed. Once you're comfortable with control structures, I recommend this reading for best practices: https://rstudio-education.github.io/hopr/speed.html
+
+Let's say we have a vector of 20 random numbers, and we want to take the absolute value of each. How do we do this?
+
+```{r}
+
+```
+
+When tackling such problems, it's often good to start with simple tasks and build out rather than to write the whole thing at once. So how do we take the absolute value of a single number in our vector?
+```{r}
+
+```
+
+Now let's put this in a loop
+```{r}
+
+
+```
+* Why didn't this loop work?
+
+```{r}
+
+
+```
+Now our loop works, but it seems inefficient. We don't need the absolute value of all numbers, only negative numbers. Let's introduce some control statements.
+
+```{r}
+
+
+```
+* Why did this loop fail?
+
+```{r}
+
+
+```
+
+Again, this example is designed to give you an intuition for how control structures work. For best practices in iterating through data, use vectorized functions and the **apply()** family of functions. You will probably also find the **ifelse()** function useful.
+
+Here is what a vectorized version of our loop would look like.
+```{r}
+
+```
+
+And again with the ifelse() function: 
+```{r}
+
+```
+
+The vectorized version is quicker because it applies our operation to all negative elements in our vector at once, rather than doing it one at a time. In practice, don't worry too much about efficiency until you get to the point that your code is taking hours to run. Worry more about just getting things working when you're learning a language.
+
+# User defined functions
+Functions help us repeat a series of operations quickly with a single command. Often, we will have some specific series of operations we want to repeat but there are no R functions to do this. In such cases, we can define our own functions!
+
+```{r}
+
+
+```
+* Why didn't this function work?
+
+Things within a function are called the local environment. Changes in the **local environment** do not affect the **global environment.** So when we changed the vec object in the function, we changed the local vec. When we called the vec object outside of the function, we called the global vec. If we want local changes to persist in the global environment, we need to return the local object and store it.
+
+```{r}
+
+
+```
+
+
+# The Monty Hall problem
+
+You are on a game show and are presented with three doors. Behind two are goats, and behind one is a car. Assume you want the car. You pick a door, and once you have Monty Hall opens one of the other two doors to reveal a goat. He then gives you a choice, do you want to change your selected door, or keep your initial selection? What is the best choice?
+
+Here are some functions and operators that might be useful:
+```{r}
+# sample()
+# %in%
+# !
+# ifelse()
+# replicate()
+```
+
+Let's first break down the process:
+1. A car is randomly assigned to a door
+2. A contestant randomly chooses a door
+3. Monty opens a door that does not have a car
+4. A contestant randomly chooses to switch or stay
+
+
+```{r}
+
+
+```
+
+We now have a complete Monty Hall simulation. Let's put it in a function.
+```{r}
+
+
+```
+
+Now that we have our function, we can replicate it many times to get our result
+```{r}
+
+
+```
+

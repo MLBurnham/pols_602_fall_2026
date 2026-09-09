@@ -1,0 +1,145 @@
+---
+title: "R Workshop Day 3: Objects, Tables, and Plots"
+author: "Mike Burnham"
+date: "`r format(Sys.time(), '%d %B, %Y')`" # How would we change the format of the date?
+output: 
+  html_notebook:
+    number_sections: true
+#output: pdf_document
+# Add things like index Code folding to the preamble
+---
+
+```{r}
+knitr::opts_knit$set(root.dir = '/home/mike/Insync/OneDrive/R-workshop')
+```
+
+```{r}
+library(stargazer)
+library(ggplot2)
+setwd("/home/mike/Insync/OneDrive/R-workshop")
+
+df <- read.csv('data/justice_results.csv')
+# lets drop the missing data today
+df <- df[complete.cases(df),]
+```
+
+
+# Objects
+
+Everything in R is an **object.** We won't worry about the technical definition of an object, but all you need to know is that objects can be used to store and manipulate data and have **attributes**. Attributes are used for storing and organizing the features of an object.
+```{r}
+
+```
+
+You will probably never do object oriented programming in R, but having a conceptual idea of what they are and how to examine or manipulate their attributes will help with some of the most common tasks in R.
+
+# Models
+
+One of the ways that R speeds up analysis is by offering functions that work with complicated objects. A good example of this is how we work with model objects. 
+
+```{r}
+
+```
+
+There are several functions in R that work with model objects. The two you will probably use most often are summary() and plot()
+```{r}
+
+```
+
+```{r}
+
+```
+
+You can also access and interact with parts of the model object directly. For example, you may want to work with the residuals of the model directly for plotting or diagnostics
+```{r}
+
+```
+
+# Tables
+
+You'll want to make presentable and well formatted tables for your homework and papers. The stargazer package is the best way to accomplish this. It works with model objects, is easy to use, and can output results in multiple formats.
+```{r}
+
+
+
+```
+
+If you want latex output, just change the type argument and copy+paste the latex output. If you want a nice table in an R markdown notebook, you can output an HTML table and paste that in the body of the notebook.
+
+# Plots
+## Basic plots
+
+R comes with a lot of built in plotting functions
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+
+## ggplot2
+You can do a lot with base R, but generally you will rely on the ggplot2 package for publication quality plots.
+
+The basic idea behind ggplot2 is that graphics are built from layered "grammatical elements." You do not need to memorize these layers, but understanding this concept of building graphics via layered elements will help you understand how ggplot2 works. 
+![](images/ggplot.png)
+Data, aesthetics, and geometries are the three most basic layers you need to understand.
+
+Aesthetics:
+* Axis
+* color, fill
+* size
+* opacity (alpha)
+* shape
+* line type
+
+Geometries:
+* points
+* lines
+* bars
+* histogram
+* boxplot
+* etc.
+
+Let's see how this works with a basic plot. We'll start with each element and add to it iteratively.
+```{r}
+
+
+```
+
+
+This is the basic idea, let's do a more complicated example.
+
+```{r}
+
+
+```
+
+Now lets add a best fitting line
+```{r}
+
+
+```
+We want a single line for all observations. Why are there two and how can we get a single line?
+
+```{r}
+
+```
+
+```{r}
+
+
+```
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
