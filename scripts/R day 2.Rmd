@@ -6,17 +6,6 @@ output:
   html_notebook:
     number_sections: true
 ---
-
-```{r, setup, include=FALSE}
-knitr::opts_knit$set(root.dir = 'Users/mlb6496/Library/CloudStorage/OneDrive-TexasA&MUniversity/Courses/POLS 602/pols_602/R_intro')
-```
-
-
-```{r}
-setwd("/Users/mlb6496/Library/CloudStorage/OneDrive-TexasA&MUniversity/Courses/POLS 602/pols_602/R_intro")
-```
-
-
 # Working with packages 
 
 Packages are code and data that can be installed to add new functions or resources to your R environment. Packages must first be installed, and then any time you want to use them you must import them to the environment. 
@@ -29,7 +18,10 @@ Best Practices:
   * Remove packages that are not used
   * Keep all package imports at the top of your script
 ```{r}
+install.packages('dplyr')
+library(dplyr)
 
+#library(tidyverse) # please don't do this! 
 ```
 
 Let's look at a good example!
@@ -40,36 +32,79 @@ Datasets are commonly stored as simple files. The most common format is the **CS
 You may also come across hierarchical data files such as the JSON, as well as database management systems (DBMS) such as SQL databases. We won't cover these for now, just know that R has packages and tools for handling non-tabular data.
 
 ```{r}
+# Let's try reading in some data
+df <- read.csv('data/justice_results.tab')
+# Why did this fail?
+# It used the wrong delimiter 
+df <- read.csv('data/justice_results.tab', sep = '\t')
+
+# Let's try converting the file to a csv.
+write.csv(df, 'data/justice_results.csv')
+# now lets read the file in again
+df <- read.csv('data/justice_results.csv')
+
+# What changed and why?
+# There is an exta column the row name were written wehn we saved the file as a .csv
+# let's write the file without the row names
+write.csv(df, 'data/justice_results.csv', row.names = FALSE)
+
+df[c('docketId', 'petitioner_vote', 'justiceName', 'lagged_ideology', 'term', 'conservative_lc')]
+
+length(unique(paste(df$docketId, df$justice)))
 
 ```
 
 # Working With Data Frames
 
 ## Exploring Data
-Here are some useful functions for exploring data frames:
+Here are some useful functions for exploring data frames
 ```{r}
-
+dim(df)
+nrow(df)
+ncol(df)
+head(df)
+tail(df)
+colnames(df)
+summary(df)
+str(df)
 ```
 
 * What variables are in the data?
 * What data types does the data set contain?
 * In what context might you use these functions outside of data exploration?
 
+```{r}
+# to access a single column in the data frame
+df$justiceName
+
+# missing values
+df[complete.cases(df),]
+df[!complete.cases(df),]
+```
+
 ## Subsetting and Dataframe Manipulation
 
 Subsetting is accessing individual components of the dataframe, either to reference the data or to assign it to another object. The generic method of subsetting in R is **df[row, column]**, where df is the dataframe object, and row and column are the row/column names or index numbers
 ```{r}
-
+# Return the value in the first row and first column
+df[1,1]
+# Leaving one of the values blank returns all values
+# return all rows for the first column
+df[,1]
+# return all columns for the first row
+df[1,]
+# You can also pass column names
+df[,'justiceName']
 ```
 
 What is the name and ideology of the 50th justice to appear in the dataset?
 ```{r}
-
+df[50, c('justiceName', 'lagged_ideology')]
 ```
 
 Another way to access columns is with the **$** operator.
 ```{r}
-
+df$justiceName
 ```
 * What is the data type and structure of df['justiceName'] and df$justiceName?
 
@@ -77,39 +112,47 @@ Another way to access columns is with the **$** operator.
 
 What does the following return?
 ```{r}
-
+df$lagged_ideology >= 0
 ```
 * What is the data type and structure?
 
 ```{r}
-
+typeof(df$lagged_ideology >= 0)
 ```
 
 This is a very powerful tool for subsetting your data. You might hear this referred to as a **boolean mask**. 
 ```{r}
-
+# return the name and ideology of justices with an ideology greater than 0
+df[df$lagged_ideology > 0, c('justiceName', 'lagged_ideology')]
 ```
 
 * Get a subset of all rows for justice Thurgood Marshall
 ```{r}
-
+df[df$justiceName == 'TMarshall',]
 ```
 
 There are multiple other ways to subset data frames, including the subset function and other functions in the dplyr package.
 ```{r}
-
+subset(df, justiceName == 'TMarshall')
 ```
 These methods may seem a bit more appealing at first because they seem more intuitive and legible. As a rule of thumb, try to stick with **[]** and **\$** notation. Subset does a few things under the hood that can lead to unintended consequences (dropping NA values) or errors, and **[]/$** notation does not introduce any new dependencies.
 
 Let's create two separate data frames --- one with justice and case characteristics, and one with vocal and speech variables.
 ```{r}
-
+justs <- df[,c('docketId', 'justiceName', 'lagged_ideology', 'term')]
+cases <- df[,c('docketId', 'justiceName', 'petitioner_vote', 'pitch_diff', 'conservative_lc')]
 ```
 
 Let's say you want to re-scale the ideology variable so that it has a minimum value of zero. How do we do this?
 
 ```{r}
+# get the minimum value
+min(justs$lagged_ideology)
+# this returns NA, why?
+# NA represents unknown values. Functions will often have an argument for dealing with missing values.
+min.ideal <- min(justs$lagged_ideology, na.rm = T) # ignore NA values
 
+justs$cons <- justs$lagged_ideology + abs(min.ideal)
 ```
 
 Dealing with missing values is a common task. Two functions will help you deal with them: is.na() and complete.cases(). These can be used as boolean masks to filter out missing data or to observe where missing data occurs.
@@ -118,13 +161,20 @@ Dealing with missing values is a common task. Two functions will help you deal w
 * How many rows are missing the lagged_ideology variable?
 
 ```{r}
+is.na(justs) # returns true if a value is missing
+complete.cases(justs) # returns true if there are no missing values
 
+justs[!complete.cases(justs),] # return rows that have missing data
+justs[complete.cases(justs),] # drop rows with missing data
+sum(is.na(justs$lagged_ideology)) # count rows missing lagged ideology
 ```
 
 Another common task is some form of aggregation. Let's say we want to know the average ideology for each justice. We can do this with the aggregate function.
 
 ```{r}
-
+?aggregate
+ideal <- aggregate(justs$lagged_ideology, list(justs$justiceName), FUN = mean, na.rm = TRUE)
+colnames(ideal) <- c('justiceName', 'avg_ideology')
 ```
 
 Data frames can be manipulated in many ways. Our goal isn't to cover all of them here. For basic operations like sub-setting or creating new variables, I recommend sticking with base R. More complicated tasks like pivoting, melting, etc. can be a bit of a pain in base R, so I recommend using the dplyr and tidyr packages. See the Data Wrangling cheat sheet in the materials for more.
@@ -137,19 +187,19 @@ Joining data is both one of the most common tasks you will do, as well as one of
 
 First, let's look at the documentation for R's merge() function:
 ```{r}
-#?merge()
+?merge()
 ```
 Notice at the bottom of the details section it references SQL joins.
 
 Let's say we want to join our cases and ideology data so that each row in cases also has the justice's average ideology. How do we do this with the merge function?
 
 ```{r}
-
+merge(cases, ideal, by = 'justiceName', all.x = T)
 ```
 
 Now lets join our case data with our justice data
 ```{r}
-
+merge(cases, justs, by = c('justiceName'), all.x = T)
 ```
 
 * What happened here and why?
@@ -157,7 +207,7 @@ Now lets join our case data with our justice data
 
 When joining data make sure you join on a common unique identifier for each row. In this instance, we can accomplish this by joining on both the justiceName and docketId columns.
 ```{r}
-
+merge(cases, justs, by = c('justiceName', 'docketId'), all.x = T)
 ```
 
 **Always validate your merge results!**
@@ -171,6 +221,6 @@ The left join is the most commonly used merge and I recommend using it as the de
 
 The dplyr package has functions that operate similarly to merge, but more explicitly use SQL terminology:
 ```{r}
-
+left_join(cases, justs, by = c('justiceName', 'docketId'))
 ```
 

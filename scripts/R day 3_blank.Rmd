@@ -10,17 +10,11 @@ output:
 ---
 
 ```{r}
-knitr::opts_knit$set(root.dir = '/home/mike/Insync/OneDrive/R-workshop')
+
 ```
 
 ```{r}
-library(stargazer)
-library(ggplot2)
-setwd("/home/mike/Insync/OneDrive/R-workshop")
 
-df <- read.csv('data/justice_results.csv')
-# lets drop the missing data today
-df <- df[complete.cases(df),]
 ```
 
 
