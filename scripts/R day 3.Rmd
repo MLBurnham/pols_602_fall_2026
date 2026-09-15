@@ -1,0 +1,216 @@
+---
+title: "R Workshop Day 3: Objects, Tables, and Plots"
+author: "Mike Burnham"
+date: "`r format(Sys.time(), '%d %B, %Y')`" # How would we change the format of the date?
+output: 
+  html_notebook:
+    number_sections: true
+#output: pdf_document
+# Add things like index Code folding to the preamble
+---
+```{r}
+library(stargazer)
+library(ggplot2)
+setwd("C:\\Users\\mikeb\\OneDrive - The Pennsylvania State University\\R-workshop")
+df <- read.csv('data/justice_results.csv')
+# lets drop the missing data today
+df <- df[complete.cases(df),]
+```
+
+
+# Objects
+
+Everything in R is an **object.** We won't worry about the technical definition of an object, but all you need to know is that objects can be used to store and manipulate data and have **attributes**. Attributes are used for storing and organizing the features of an object.
+```{r}
+attributes(df) # you will rarely, if ever, use this function. This is for illustrative purposes
+
+# So if we call the names attribute of the df object it will return the vectors within that attribute
+names(df)
+```
+
+You will probably never do object oriented programming in R, but having a conceptual idea of what they are and how to examine or manipulate their attributes will help with some of the most common tasks in R.
+
+# Models
+
+One of the ways that R speeds up analysis is by offering functions that work with complicated objects. A good example of this is how we work with model objects. 
+
+```{r}
+# to create a model, use the GLM function. Let's look at the documentation
+?glm()
+
+# So we need to specify a formula and a model family
+# let's start by creating a formula
+eq1 <- petitioner_vote ~ lagged_ideology + pitch_diff + petitioner_liwc_neg + petitioner_count + conservative_lc
+
+# now let's call the glm function and specify a model family
+md1 <- glm(eq1, family = binomial)
+
+# We get an error message, why? Is there an object "petitioner vote" in our global environment?
+# there is no object "petitioner_vote". There is a vector called petitioner_vote in our data frame, however, so we can specify that
+md1 <- glm(eq1, family = binomial, data = df)
+# lets see what is in our model object
+attributes(md1)
+```
+
+There are several functions in R that work with model objects. The two you will probably use most often are summary() and plot()
+```{r}
+summary(md1)
+```
+
+```{r}
+plot(md1)
+```
+
+You can also access and interact with parts of the model object directly. For example, you may want to work with the residuals of the model directly for plotting or diagnostics
+```{r}
+plot(md1$residuals)
+```
+
+# Tables
+
+You'll want to make presentable and well formatted tables for your homework and papers. The stargazer package is the best way to accomplish this. It works with model objects, is easy to use, and can output results in multiple formats.
+```{r}
+?stargazer
+
+stargazer(md1, type = 'text', dep.var.labels = c('Petitioner Vote'), covariate.labels = c('Ideology','Pitch', 'Negative Words', 'Questions', 'Cons. Lower Court'))
+
+```
+
+If you want latex output, just change the type argument and copy+paste the latex output. If you want a nice table in an R markdown notebook, you can output an HTML table and paste that in the body of the notebook.
+
+# Plots
+## Basic plots
+
+R comes with a lot of built in plotting functions
+```{r}
+# plots are also objects that can be stored and manipulated
+id.hist <- hist(df$lagged_ideology)
+attributes(id.hist)
+plot(id.hist)
+
+# Usally you will just call the function with the desired arguments
+hist(df$lagged_ideology, xlab = 'Ideology', main = 'Distribution of SC Justice Ideology')
+```
+
+```{r}
+# box plots
+boxplot(df$lagged_ideology)
+# scatter plots
+plot(df$lagged_ideology, df$petitioner_count)
+```
+
+
+## ggplot2
+You can do a lot with base R, but generally you will rely on the ggplot2 package for publication quality plots.
+
+The basic idea behind ggplot2 is that graphics are built from layered "grammatical elements." You do not need to memorize these layers, but understanding this concept of building graphics via layered elements will help you understand how ggplot2 works. 
+![](images/ggplot.png)
+Data, aesthetics, and geometries are the three most basic layers you need to understand.
+
+Aesthetics:
+* Axis
+* color, fill
+* size
+* opacity (alpha)
+* shape
+* line type
+
+Geometries:
+* points
+* lines
+* bars
+* histogram
+* boxplot
+* etc.
+
+Let's see how this works with a basic plot. We'll start with each element and add to it iteratively.
+```{r}
+# First add the data to the object
+gg1 <- ggplot(df)
+gg1
+
+# then define how we want to map data on to the plot
+gg1 <- gg1 + aes(x=petitioner_count)
+gg1
+
+# Finally we define the geometry we want the plot to take
+gg1 <- gg1 + geom_bar()
+gg1
+
+# Now let's say we want to change the plot to a histogram, so we add the geom_histogram to our plot. What went wrong here?
+gg1 <- gg1 + geom_histogram()
+gg1
+
+# The gg1 object already had a geom layer, and we added another one on top of it rather than replacing it.
+```
+
+
+This is the basic idea, let's do a more complicated example.
+
+```{r}
+# Let's start with a basic plot
+ggplot(df) +
+  aes(petitioner_pitch, respondent_pitch, color = as.factor(petitioner_vote)) +
+  geom_point(shape = 20)
+```
+
+```{r}
+# Now lets add a best fitting line
+ggplot(df) +
+  aes(petitioner_pitch, respondent_pitch, color = as.factor(petitioner_vote)) +
+  geom_point(shape = 20) +
+  geom_smooth()
+
+# This created two best fitting lines. Why?
+# How can we make it so we only get one best fitting line?
+
+```
+
+
+```{r}
+# Move the color aesthetic to the point geometry
+ggplot(df) +
+  aes(petitioner_pitch, respondent_pitch) +
+  geom_point(shape = 20,  aes(color = as.factor(petitioner_vote))) +
+  geom_smooth()
+
+```
+
+```{r}
+# Let's change the colors so they are more colorblind friendly
+# search for ggplot2 color palettes online for color hexcodes
+ggplot(df) +
+  aes(petitioner_pitch, respondent_pitch) +
+  geom_point(shape = 19,  aes(color = as.factor(petitioner_vote))) +
+  geom_smooth(color = 'black') +
+  scale_color_manual(values = c('#0072b2', '#D55E00'))
+```
+```{r}
+# Now lets add some labels
+ggplot(df) +
+  aes(petitioner_pitch, respondent_pitch) +
+  geom_point(shape = 19,  aes(color = as.factor(petitioner_vote))) +
+  geom_smooth(color = 'black') +
+  scale_color_manual("Petitioner Vote", values = c('#0072b2', '#D55E00'), labels = c('For', 'Against')) +
+  xlab('Petitioner Pitch') +
+  ylab('Respondent Pitch') +
+  ggtitle('Justice Pitch by Target',)
+```
+
+```{r}
+# Finally, let's adjust the theme for a cleaner presentation
+gg1 <- ggplot(df) +
+  aes(petitioner_pitch, respondent_pitch) +
+  geom_point(shape = 19,  aes(color = as.factor(petitioner_vote))) +
+  geom_smooth(color = 'black') +
+  scale_color_manual("Petitioner Vote", values = c('#0072b2', '#D55E00'), labels = c('For', 'Against')) +
+  xlab('Petitioner Pitch') +
+  ylab('Respondent Pitch') +
+  ggtitle('Justice Pitch by Target',) +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5)) 
+plot(gg1)
+# and save the plot
+ggsave('images/pitch.png', width = 8, height = 5, dpi = 300)
+```
+
